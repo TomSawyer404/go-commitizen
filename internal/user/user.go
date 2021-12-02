@@ -1,4 +1,4 @@
-// user.go - version 0.2
+// user.go - version 0.3
 // @Note
 //  - Definition of User Struct
 //  - Format: <Header> ... <Body> ... <Footer>
@@ -12,12 +12,13 @@
 //  - Rules come from [here](https://www.ruanyifeng.com/blog/2016/01/commit_message_change_log.html);
 //
 //  version 0.2: Refactor with plugin `go-prompt`
+//  version 0.3: Some details updated
 //
 // @Author:  MrBanana
-// @Date:    2021-8-18
+// @Date:    2021-12-2
 // @Licence: The MIT Licence
 
-package main
+package user
 
 import (
 	"fmt"
@@ -55,7 +56,7 @@ var (
 // stage 4: finish <Body>, ready to write <Footer>
 // stage 5: finish all ... exit stage
 type User struct {
-	stage  int
+	Stage  int
 	header string
 	body   string
 	footer string
@@ -64,7 +65,7 @@ type User struct {
 // Constructor of User struct
 func NewUser() *User {
 	new_user := &User{
-		stage:  0,
+		Stage:  0,
 		header: "",
 		body:   "\n",
 		footer: "\n",
@@ -72,71 +73,68 @@ func NewUser() *User {
 	return new_user
 }
 
-func (this *User) driver() {
-	switch this.stage {
+func (this *User) Driver() {
+	switch this.Stage {
 	case 0:
-		t := prompt.Input("  Please choose your header-type: ", completer_header_type)
+		t := prompt.Input("Header Type>> ", completer_header_type)
 		if _, ok := headType[t]; ok {
 			this.header += t
-			this.stage = 1
+			this.Stage = 1
 		} else {
 			fmt.Println("Wrong header-type, please try again!")
-			this.stage = 0
+			this.Stage = 0
 		}
 		break
 
 	case 1: // header-scope
 		fmt.Println()
-		t := prompt.Input("  Please choose your header-scope: ", completer_header_scope)
+		t := prompt.Input("Header Scope>> ", completer_header_scope)
 		if "None" == t {
 			this.header += `: `
-			this.stage = 2
+			this.Stage = 2
 		} else if _, ok := headScope[t]; ok {
 			this.header += `(` + t + `): `
-			this.stage = 2
+			this.Stage = 2
 		} else {
-			fmt.Println("Wrong header-type, please try again!")
-			this.stage = 1
+			fmt.Println("Wrong header-scope, please try again!")
+			this.Stage = 1
 		}
 		break
 
 	case 2: // header-subject
 		fmt.Println()
-		fmt.Println("  Please enter your header-subject: ")
-		t := prompt.Input(">>> ", completer_header_subject)
+		t := prompt.Input("Header Subject>> ", completer_header_subject)
 		if "" == t {
 			fmt.Println("header-subject is a must! please try again!")
-			this.stage = 2
+			this.Stage = 2
 		} else {
 			this.header += t + "\n"
-			this.stage = 3
+			this.Stage = 3
 		}
 
 		break
 
 	case 3: // Body
-		fmt.Println("\nPlease input your message body: ")
 		for {
-			t := prompt.Input("body> ", completer_multiline)
+			t := prompt.Input("Message Body>> ", completer_multiline)
 			if "" == t {
 				break
 			}
 			this.body += t + "\n"
 		}
-		this.stage = 4
+		this.Stage = 4
 
 		break
 
 	case 4: // Footer
-		fmt.Println("\nPlease input your message footer: ")
 		for {
-			t := prompt.Input("footer> ", completer_multiline)
+			t := prompt.Input("Message Footer>> ", completer_multiline)
 			if "" == t {
 				break
 			}
 			this.footer += t + "\n"
 		}
-		this.stage = 5
+		this.Stage = 5
 
 		break
 
@@ -164,24 +162,25 @@ func (this *User) driver() {
 			log.Fatalln("ERROR in os.Remove ->", err)
 		}
 
-		this.stage = 6
+		this.Stage = 6
 		break
 
 	default:
 		// Something wrong...
-		log.Printf("\x1b[31m\t-------- What's that stage? %d\n", this.stage)
+		log.Printf("\x1b[31m\t-------- What's that stage? %d\n", this.Stage)
 	}
 }
 
 func completer_header_type(d prompt.Document) []prompt.Suggest {
 	s := []prompt.Suggest{
-		{Text: "feat", Description: "I am trying to add a new feature"},
-		{Text: "fix", Description: "Some bugs have fixed"},
-		{Text: "docs", Description: "The documents has been modified"},
-		{Text: "style", Description: "Changes that do not affect code operation"},
-		{Text: "factor", Description: "It is neither a new function nor a code change to modify a bug"},
+		{Text: "feat", Description: "A new feature"},
+		{Text: "fix", Description: "A bug fix"},
+		{Text: "docs", Description: "Documentation only changes"},
+		{Text: "style", Description: "Changes that do not affect the meaning of the code"},
+		{Text: "factor", Description: "A code change that neither fixes a bug or adds a feature"},
+		{Text: "perf", Description: "A code change that improves performance"},
 		{Text: "test", Description: "Add some test cases"},
-		{Text: "chore", Description: "Changes in the construction process or auxiliary tools"},
+		{Text: "chore", Description: "Changes to the build process or auxiliary tools"},
 	}
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
