@@ -76,7 +76,7 @@ func NewUser() *User {
 func (this *User) Driver() {
 	switch this.Stage {
 	case 0:
-		t := prompt.Input("Header Type>> ", completer_header_type)
+		t := prompt.Input(">> Header Type: ", completer_header_type)
 		if _, ok := headType[t]; ok {
 			this.header += t
 			this.Stage = 1
@@ -88,7 +88,7 @@ func (this *User) Driver() {
 
 	case 1: // header-scope
 		fmt.Println()
-		t := prompt.Input("Header Scope>> ", completer_header_scope)
+		t := prompt.Input(">> Header Scope: ", completer_header_scope)
 		if "None" == t {
 			this.header += `: `
 			this.Stage = 2
@@ -103,7 +103,7 @@ func (this *User) Driver() {
 
 	case 2: // header-subject
 		fmt.Println()
-		t := prompt.Input("Header Subject>> ", completer_header_subject)
+		t := prompt.Input(">> Header Subject: ", completer_header_subject)
 		if "" == t {
 			fmt.Println("header-subject is a must! please try again!")
 			this.Stage = 2
@@ -116,7 +116,7 @@ func (this *User) Driver() {
 
 	case 3: // Body
 		for {
-			t := prompt.Input("Message Body>> ", completer_multiline)
+			t := prompt.Input(">> Message Body: ", completer_multiline)
 			if "" == t {
 				break
 			}
@@ -128,7 +128,7 @@ func (this *User) Driver() {
 
 	case 4: // Footer
 		for {
-			t := prompt.Input("Message Footer>> ", completer_multiline)
+			t := prompt.Input(">> Message Footer: ", completer_multiline)
 			if "" == t {
 				break
 			}
