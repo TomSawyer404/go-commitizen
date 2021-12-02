@@ -76,7 +76,8 @@ func NewUser() *User {
 func (this *User) Driver() {
 	switch this.Stage {
 	case 0:
-		t := prompt.Input(">> Header Type: ", completer_header_type)
+		t := input_prompt("Header Type", completer_header_type)
+
 		if _, ok := headType[t]; ok {
 			this.header += t
 			this.Stage = 1
@@ -88,7 +89,8 @@ func (this *User) Driver() {
 
 	case 1: // header-scope
 		fmt.Println()
-		t := prompt.Input(">> Header Scope: ", completer_header_scope)
+		t := input_prompt("Header Scope", completer_header_scope)
+
 		if "None" == t {
 			this.header += `: `
 			this.Stage = 2
@@ -103,7 +105,8 @@ func (this *User) Driver() {
 
 	case 2: // header-subject
 		fmt.Println()
-		t := prompt.Input(">> Header Subject: ", completer_header_subject)
+		t := input_prompt("Header Subject", completer_header_subject)
+
 		if "" == t {
 			fmt.Println("header-subject is a must! please try again!")
 			this.Stage = 2
@@ -115,8 +118,9 @@ func (this *User) Driver() {
 		break
 
 	case 3: // Body
+		fmt.Println()
 		for {
-			t := prompt.Input(">> Message Body: ", completer_multiline)
+			t := input_prompt("Message Body", completer_multiline)
 			if "" == t {
 				break
 			}
@@ -127,8 +131,9 @@ func (this *User) Driver() {
 		break
 
 	case 4: // Footer
+		fmt.Println()
 		for {
-			t := prompt.Input(">> Message Footer: ", completer_multiline)
+			t := input_prompt("Message Footer", completer_multiline)
 			if "" == t {
 				break
 			}
@@ -198,7 +203,7 @@ func completer_header_scope(d prompt.Document) []prompt.Suggest {
 
 func completer_header_subject(d prompt.Document) []prompt.Suggest {
 	s := []prompt.Suggest{
-		{Text: "type", Description: "Type something to descript your commit"},
+		{Text: "Anything", Description: "Type anything to descript your commit"},
 	}
 	return prompt.FilterHasPrefix(s, d.GetWordBeforeCursor(), true)
 }
@@ -206,4 +211,14 @@ func completer_header_subject(d prompt.Document) []prompt.Suggest {
 func completer_multiline(d prompt.Document) []prompt.Suggest {
 	s := []prompt.Suggest{}
 	return s
+}
+
+func input_prompt(str string, completer prompt.Completer) string {
+	return prompt.Input(">> "+str+": ", completer,
+		prompt.OptionTitle("git-cz"),
+		prompt.OptionPrefixTextColor(prompt.Yellow),
+		prompt.OptionPreviewSuggestionTextColor(prompt.Blue),
+		prompt.OptionSelectedSuggestionBGColor(prompt.LightGray),
+		prompt.OptionSuggestionBGColor(prompt.DarkGray))
+
 }
