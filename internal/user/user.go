@@ -1,4 +1,4 @@
-// user.go - version 0.3
+// user.go - version 0.4
 // @Note
 //  - Definition of User Struct
 //  - Format: <Header> ... <Body> ... <Footer>
@@ -13,9 +13,10 @@
 //
 //  version 0.2: Refactor with plugin `go-prompt`
 //  version 0.3: Some details updated
+//  version 0.4: Add Windows System support
 //
 // @Author:  MrBanana
-// @Date:    2021-12-2
+// @Date:    2022-1-16
 // @Licence: The MIT Licence
 
 package user
@@ -31,20 +32,20 @@ import (
 
 var (
 	headType = map[string]struct{}{
-		"feat":   struct{}{},
-		"fix":    struct{}{},
-		"docs":   struct{}{},
-		"style":  struct{}{},
-		"factor": struct{}{},
-		"test":   struct{}{},
-		"chore":  struct{}{},
+		"feat":   {},
+		"fix":    {},
+		"docs":   {},
+		"style":  {},
+		"factor": {},
+		"test":   {},
+		"chore":  {},
 	}
 
 	headScope = map[string]struct{}{
-		"repo":    struct{}{},
-		"model":   struct{}{},
-		"logic":   struct{}{},
-		"handler": struct{}{},
+		"repo":    {},
+		"model":   {},
+		"logic":   {},
+		"handler": {},
 	}
 )
 
@@ -73,106 +74,102 @@ func NewUser() *User {
 	return new_user
 }
 
-func (this *User) Driver() {
-	switch this.Stage {
+func (me *User) Driver() {
+	switch me.Stage {
 	case 0:
 		t := input_prompt("Header Type", completer_header_type)
 
 		if _, ok := headType[t]; ok {
-			this.header += t
-			this.Stage = 1
+			me.header += t
+			me.Stage = 1
 		} else {
 			fmt.Println("Wrong header-type, please try again!")
-			this.Stage = 0
+			me.Stage = 0
 		}
-		break
 
 	case 1: // header-scope
 		fmt.Println()
 		t := input_prompt("Header Scope", completer_header_scope)
 
-		if "None" == t {
-			this.header += `: `
-			this.Stage = 2
+		if t == "None" {
+			me.header += `: `
+			me.Stage = 2
 		} else if _, ok := headScope[t]; ok {
-			this.header += `(` + t + `): `
-			this.Stage = 2
+			me.header += `(` + t + `): `
+			me.Stage = 2
 		} else {
 			fmt.Println("Wrong header-scope, please try again!")
-			this.Stage = 1
+			me.Stage = 1
 		}
-		break
 
 	case 2: // header-subject
 		fmt.Println()
 		t := input_prompt("Header Subject", completer_header_subject)
 
-		if "" == t {
+		if t == "" {
 			fmt.Println("header-subject is a must! please try again!")
-			this.Stage = 2
+			me.Stage = 2
 		} else {
-			this.header += t + "\n"
-			this.Stage = 3
+			me.header += t + "\n"
+			me.Stage = 3
 		}
-
-		break
 
 	case 3: // Body
 		fmt.Println()
 		for {
 			t := input_prompt("Message Body", completer_multiline)
-			if "" == t {
+			if t == "" {
 				break
 			}
-			this.body += t + "\n"
+			me.body += t + "\n"
 		}
-		this.Stage = 4
-
-		break
+		me.Stage = 4
 
 	case 4: // Footer
 		fmt.Println()
 		for {
 			t := input_prompt("Message Footer", completer_multiline)
-			if "" == t {
+			if t == "" {
 				break
 			}
-			this.footer += t + "\n"
+			me.footer += t + "\n"
 		}
-		this.Stage = 5
-
-		break
+		me.Stage = 5
 
 	case 5: // Write message to a file and <git commit -F> it
-		// Open a file in /tmp/message
-		fd, err := os.OpenFile("/tmp/git-message.txt", os.O_RDWR|os.O_CREATE, 0666)
+		// Open a file in `../git-message.txt`
+		git_msg_path := "../git-message.txt"
+		fd, err := os.OpenFile(git_msg_path, os.O_RDWR|os.O_CREATE, 0666)
 		if err != nil {
 			log.Fatalln("ERROR in os.OpenFile ->", err)
 		}
+		defer func() {
+			// Delete the tmp file
+			if err = fd.Close(); err != nil {
+				log.Fatalln("ERROR in os.Close() ->", err)
+			}
+			if err = os.Remove(git_msg_path); err != nil {
+				log.Fatalln("ERROR in os.Remove ->", err)
+			}
+		}()
 
 		// Write message to this file
-		written_num, err2 := fd.WriteString(this.header + this.body + this.footer)
-		if err2 != nil || 0 == written_num {
+		written_num, err2 := fd.WriteString(me.header + me.body + me.footer)
+		if err2 != nil || written_num == 0 {
 			log.Fatalln("ERROR in fd.WriteString ->", err2)
 		}
 
 		// Execve("/bin/bash", "git commit -F ~/message")
-		cmd := exec.Command("/usr/bin/git", "commit", "-F", "/tmp/git-message.txt")
+		cmd := exec.Command("git", "commit", "-F", git_msg_path)
 		if err = cmd.Run(); err != nil {
 			log.Fatalln("ERROR in exec.Command ->", err)
 		}
 
-		// Delete the tmp file
-		if err = os.Remove("/tmp/git-message.txt"); err != nil {
-			log.Fatalln("ERROR in os.Remove ->", err)
-		}
-
-		this.Stage = 6
-		break
+		me.Stage = 6
 
 	default:
 		// Something wrong...
-		log.Printf("\x1b[31m\t-------- What's that stage? %d\n", this.Stage)
+		log.Printf("\x1b[31m\t-------- What's that stage? %d\n", me.Stage)
 	}
 }
 
