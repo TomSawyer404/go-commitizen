@@ -162,7 +162,9 @@ func (me *User) Driver() {
 		// Execve("/bin/bash", "git commit -F ~/message")
 		cmd := exec.Command("git", "commit", "-F", git_msg_path)
 		if err = cmd.Run(); err != nil {
-			log.Fatalln("ERROR in exec.Command ->", err)
+			log.Println("ERROR in exec.Command ->", err)
+			me.Stage = 999 // Error happen
+			return
 		}
 
 		me.Stage = 6
